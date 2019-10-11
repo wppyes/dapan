@@ -37,7 +37,14 @@
         </template>
       </el-table-column>
       <el-table-column label="奖品" align="center">
-        <el-table-column label="类型" align="center" width="100px" prop="PrizeTypeName"></el-table-column>
+        <el-table-column label="类型" align="center" width="100px" prop="PrizeTypeName">
+            <template slot-scope="scope">
+             {{scope.row.PrizeTypeName}}
+             <div>
+                {{scope.row.PTypeName}}
+             </div>
+            </template>
+        </el-table-column>
         <el-table-column label="名称" align="center" width="120px" prop="PrizeTitle"></el-table-column>
         <el-table-column label="数量" align="center" width="60px" prop="PrizeNum"></el-table-column>
       </el-table-column>      
@@ -76,6 +83,9 @@
           <el-button size="mini" type="danger" @click="betop(scope.row)" v-if="scope.row.IsTop==1 && scope.row.Status==0">
             取消置顶
           </el-button>
+          <el-button size="mini" type="" @click="quan(scope.row)" v-if="scope.row.PType>0">
+            导入券码
+          </el-button>
           <el-button
           v-if="scope.row.Status==1"
           size="mini"        
@@ -98,6 +108,37 @@
       </el-table-column>
     </el-table> 
     
+    <el-dialog title="导入券码" :visible.sync="dialogquanVisible" :close-on-click-modal="false" width="500px">
+      <el-form
+        ref="dataForm"
+        :rules="rules"
+        :model="temp"
+        label-position="left"
+        label-width="100px"
+        style="width: 350px; margin-left:50px;"
+      >  
+        <div style="margin:0 0 20px 0" v-show="count!=0">
+         <el-button type="danger" @click="del">一键清空</el-button><span class="qingkong">【{{count}}】条数据</span>
+        </div>     
+       
+        <el-upload
+            class="upload-demo"
+            drag
+            ref="upload"
+            accept=".xls,.xlsx"
+            action=""
+            :http-request="upLoad"
+            >
+            <i class="el-icon-upload"></i>
+            <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+            <div class="el-upload__tip" slot="tip">只能上传xls文件</div>
+        </el-upload>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogquanVisible = false">取消</el-button>
+        <el-button type="primary" @click="subfile">确定</el-button>
+      </div>
+    </el-dialog>
     <pagination
       small
       layout="prev, pager, next"
@@ -111,6 +152,7 @@
 <script>
 import request from "@/utils/request";
 import Pagination from "@/components/Pagination";
+import upfile from "@/utils/upload";
 var tabarr=[];
 export default {
   name: "activity",
@@ -131,7 +173,19 @@ export default {
         type:''
       },
       Model:[],
-      ModelType:[]
+      ModelType:[],
+      dialogquanVisible:false,
+      count:0,
+      temp:{
+          aid:0,
+          filepath:'',
+          type:0
+      },      
+      rules:{  
+        filepath: [
+          { required: true, message: "请上传文件！", trigger: "blur" }
+        ]
+      },
     };
   },
   created() {
@@ -144,6 +198,66 @@ export default {
     })
   },
   methods: {
+    subfile(){      
+      this.$refs["dataForm"].validate(valid => {
+        if (valid) { 
+          var param={
+              aid:this.temp.aid,
+              filepath:this.temp.filepath,
+              type:this.temp.type
+          };     
+          var data = this.$qs.stringify(param);
+          request({
+            url: "DrawActivity/UploadQM",
+            method: "post",
+            data
+          }).then(response => {
+            if (response.Status==1) {        
+
+              this.$message({
+                message: response.Msg,
+                type: "success"
+              });
+              this.count=this.count+response.Count;
+              this.$nextTick(() =>{                
+                this.$refs.upload.clearFiles();
+              })
+            }
+          });
+        }
+      });
+    },
+    upLoad(param) {
+      upfile(param.file, "Upload/UploadFile?folder=DrawPrize", data => {
+        if (data.Status) {
+          this.temp.filepath = data.Path;
+        } else {
+          this.$message({
+            message: data.Msg,
+            type: "error"
+          });
+        }
+      });
+    },
+    del(){
+      var param={
+        aid:this.temp.aid
+      }
+      var data = this.$qs.stringify(param);
+        request({
+          url: "DrawActivity/UpdateIsCode",
+          method: "post",
+          data
+        }).then(response => {
+          if (response.Status==1) {    
+            this.count=0;     
+            this.$message({
+              message: response.Msg,
+              type: "success"
+            });
+          }
+        });
+    },
     getList(){
       this.listLoading = true;
       request({
@@ -157,6 +271,26 @@ export default {
           this.listLoading = false;
         }
       });
+    },
+    quan(row){
+      this.temp.aid=row.Id;
+      this.temp.filename='';      
+      if(row.IsCode){
+        this.temp.type=0;
+      }   
+      if(row.IsKalman){
+        this.temp.type=1;
+      }      
+      request({
+        url: "DrawActivity/GetCod",
+        method: "get",
+        params: {aid:row.Id}
+      }).then(response => {
+        if (response.Status == 1) {
+          this.count=response.Count;
+        }
+      });
+      this.dialogquanVisible=true;
     },
     getModel(){
       request({
@@ -387,5 +521,6 @@ export default {
   .status1{color:#E6A23C;}
   .status2{color:#409EFF;}
   .status4{color:#909399;}
+  .qingkong{margin-left: 30px; color: #409EFF;}
 }
 </style>

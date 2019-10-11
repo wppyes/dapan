@@ -51,6 +51,41 @@ const activityRouter = {
         title: '辅助'
       }
     },
+    {
+      path: 'prize1',
+      component: () => import('@/view/h5/prize1'),
+      meta: {
+        title: '奖品管理（拼图）'
+      }
+    },
+    {
+      path: 'prizeset1',
+      component: () => import('@/view/h5/prizeset1'),
+      meta: {
+        title: '奖品发放（拼图）'
+      }
+    },
+    {
+      path: 'prize-malasong',
+      component: () => import('@/view/h5/prize-malasong'),
+      meta: {
+        title: '奖品管理（马拉松）'
+      }
+    },
+    {
+      path: 'prizeset-malasong',
+      component: () => import('@/view/h5/prizeset-malasong'),
+      meta: {
+        title: '奖品发放（马拉松）'
+      }
+    },
+    {
+      path: 'shouquan',
+      component: () => import('@/view/h5/shouquan'),
+      meta: {
+        title: '公共授权'
+      }
+    },
   ]
 }
 export default activityRouter

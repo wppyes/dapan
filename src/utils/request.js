@@ -5,8 +5,9 @@ var count=0;
 axios.defaults.headers['Content-Type'] = 'application/x-www-form-urlencoded';
 
 const service = axios.create({
-  // baseURL: 'http://192.168.1.145:8023/',
-   baseURL: '/API/', // api 的 base_url
+  //  baseURL:'http://192.168.1.60/',
+   baseURL: 'http://192.168.1.145:8023/',
+  //  baseURL: '/API/', // api 的 base_url
   timeout: 5000, // request timeout
 })
 service.interceptors.request.use(
@@ -39,7 +40,7 @@ service.interceptors.response.use(
           confirmButtonText: '确定',
           callback: action => {
               localStorage.clear();
-              router.push({ path: "/" ,query:{redirect:location.hostname}});
+              router.push({ path: "/" ,query:{redirect:location.hostname}});                                                                                                                      
           }
         });   
         localStorage.clear();

@@ -76,14 +76,25 @@
               <el-input v-model="temp.PrizeNum" placeholder="请填写奖品数量"/>
             </el-form-item>
           </el-col>
-        </el-row>                
+        </el-row>              
         <el-form-item label="绑定号码"  prop="IsBinding">
           <el-switch
             v-model="temp.IsBinding"
             active-text="是"
             inactive-text="否">
           </el-switch>
-        </el-form-item> 
+        </el-form-item>   
+        <el-form-item label="券码" prop="PType" style="width:500px">          
+          <el-select
+            v-model="temp.PType"
+            placeholder="选择券码"
+            clearable
+            style="width: 150px"
+            class="filter-item"
+          >
+            <el-option v-for="item in ModelPType" :label="item.Text" :value="item.Value" :key="item.Value"></el-option>
+          </el-select> 
+        </el-form-item>    
         <el-form-item v-show="listQuery.type" label="奖品选择" prop="PrizeId">       
           <div class="filter-container">
             <div class="filter-item">
@@ -173,6 +184,7 @@ export default {
     return {
       Model:[],
       ModelType:[],
+      ModelPType:[],
       Model1:[],
       prizelist:[],
       total:0,
@@ -193,6 +205,7 @@ export default {
         ShareTitle:'',//分享标题
         ShareDesc:'',//分享描述
         IsBinding:false,//是否绑定
+        PType:'',
       },
       editor: null,
       rules: {
@@ -287,6 +300,9 @@ export default {
           this.temp.ShareTitle=response.ActivityModel.ShareTitle;
           this.temp.ShareDesc=response.ActivityModel.ShareDesc; 
           this.temp.IsBinding=response.ActivityModel.IsBinding; 
+          if(response.ActivityModel.PType){
+            this.temp.PType=response.ActivityModel.PType.toString();
+          }          
           this.getprize();
           this.editor.ready( ()=>{
               this.editor.setContent(response.ActivityModel.Describe)
@@ -340,7 +356,8 @@ export default {
       this.temp.AwardNumber='';
       this.temp.ShareTitle='';
       this.temp.ShareDesc=''; 
-      this.temp.IsBinding=false;   
+      this.temp.IsBinding=false;  
+      this.temp.PType='';
       this.$router.go(-1);
     },
     createData(){
@@ -383,7 +400,8 @@ export default {
               this.temp.AwardNumber='';
               this.temp.ShareTitle='';
               this.temp.ShareDesc=''; 
-              this.temp.IsBinding=false;           
+              this.temp.IsBinding=false;   
+              this.temp.PType='';
             }            
           });
         }
@@ -398,6 +416,7 @@ export default {
         if (response.Status==1) {           
           this.Model=response.Model;
           this.ModelType=response.ModelType;
+          this.ModelPType=response.ModelPType;
         }            
       });
       request({

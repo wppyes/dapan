@@ -8,39 +8,42 @@
         class="filter-item"
         clearable
       />  
-      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">搜索</el-button>   
-      <el-button class="filter-item" type="primary" icon="el-icon-edit" @click="handleup">批量设置物流</el-button>   
+      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">搜索</el-button>     
     </div>
     <el-table v-loading="listLoading" :data="list" border fit highlight-current-row>
-      <el-table-column label="活动名称" align="center" prop="PrizeTitle"></el-table-column>
+      <el-table-column label="活动名称" align="center" prop="Prize"></el-table-column>
       <el-table-column label="收货人" align="center" prop="Name"></el-table-column>
       <el-table-column label="电话" align="center" prop="Phone"></el-table-column>
       <el-table-column label="地址" align="center">
         <template slot-scope="scope">
-          <span :title="scope.row.Province+scope.row.City+scope.row.Area+scope.row.Address">{{scope.row.City}}</span>          
+          <span>{{scope.row.Address}}</span>          
         </template>
       </el-table-column>
-      <el-table-column label="物流名称" align="center" prop="LogName">
+      <el-table-column label="物流名称" align="center" prop="LogisticsName">
       </el-table-column>
-      <el-table-column label="物流单号" align="center" prop="LogisticCode">
+      <el-table-column label="物流单号" align="center" prop="LogisticsCode">
       </el-table-column>
-      <el-table-column label="详情" align="center" prop="LogisticCode">
+      <el-table-column label="时间" align="center" prop="CreateTimeStr">
+      </el-table-column>
+      <el-table-column label="发货时间" align="center" prop="UpdateTimeStr">
+      </el-table-column>
+      <!-- <el-table-column label="详情" align="center" prop="LogisticCode">
          <template slot-scope="scope">
           <el-tag size="mini" type="primary" @click="detail(scope.row)" v-if="scope.row.Remark" style="cursor: pointer;">
             详情
           </el-tag>
         </template>
-      </el-table-column>
-      <el-table-column label="操作" align="center">
+      </el-table-column> -->
+      <!-- <el-table-column label="操作" align="center">
         <template slot-scope="scope">
-          <el-button v-if="!scope.row.IsDelivery && scope.row.Status==1" size="mini" type="success" @click="handlefafang(scope.row,'发放',true)">
+          <el-button size="mini" type="success" @click="handlefafang(scope.row,'发放',true)">
             发放
           </el-button>
-          <el-button  v-if="scope.row.IsDelivery" size="mini" type="success" @click="handleditor(scope.row,'修改',false)">
+          <el-button size="mini" type="success" @click="handleditor(scope.row,'修改',false)">
             <i class="el-icon-edit"></i> 修改
           </el-button>
         </template>
-      </el-table-column>
+      </el-table-column> -->
     </el-table>          
     <pagination
       small
@@ -83,51 +86,11 @@
         <el-button @click="dialogdetailVisible = false">关闭</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="批量设置物流" :visible.sync="dialogwuliuVisible" :close-on-click-modal="false" width="650px">
-      <el-form
-        ref="datawuliu"
-        :rules="ruleswuliu"
-        :model="temp1"
-        label-position="left"
-        label-width="100px"
-        style="width: 350px; margin-left:50px;"
-      >        
-         <el-form-item label="物流" prop="lid">
-          <el-select v-model="temp1.lid" placeholder="请选择物流">
-            <el-option v-for="item in Model" :label="item.Name" :key="item.Id" :value="item.Id"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="活动选择" prop="ids">
-          <el-checkbox-group v-model="temp1.ids">
-            <el-checkbox v-for="item in parizeselect" :label="item.Id" :key="item.Id" name="type">{{item.Title}}</el-checkbox>
-          </el-checkbox-group>
-        </el-form-item>
-        <el-form-item label="文件上传" prop="filepath">          
-          <el-upload
-              class="upload-demo"
-              drag
-              ref="upload"
-              accept=".xls,.xlsx"
-              action=""
-              :http-request="upLoad"
-              >
-              <i class="el-icon-upload"></i>
-              <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-              <div class="el-upload__tip" slot="tip">只能上传xls文件</div>
-          </el-upload>
-        </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogwuliuVisible = false">取消</el-button>
-        <el-button type="primary" @click="subwuliu">确定</el-button>
-      </div>
-    </el-dialog>
   </div>
 </template>
 <script>
 import request from "@/utils/request";
 import Pagination from "@/components/Pagination";
-import upfile from '@/utils/upload';
 export default {
   name: "prizeset",
   components: { Pagination },
@@ -151,7 +114,6 @@ export default {
         Name:'',
         EId:0
       }, 
-      dialogwuliuVisible:false,
       remark:{},
       parizeselect:[],
       listQuery: {
@@ -202,12 +164,14 @@ export default {
     getList(){
       this.listLoading = true;
       request({
-        url: "DrawCashInfo/GetDrawCashInfoList",
+        url: "Prize/GetPrizeList",
         method: "get",
         params: this.listQuery
       }).then(response => {
           this.listLoading = false;
         if (response.Status == 1) {
+          this.list=[];
+          this.total=0;
           if(response.List){
             this.list = response.List.DataList;
             this.total = response.List.TotalPage;
@@ -233,10 +197,12 @@ export default {
     },
     handlefafang(row,title,creat){
       this.wuliu=this.Model[0].Name;
-      this.temp.EId='';
-      this.temp.Id=0;
-      this.temp.Userid=row.Userid;
-      this.temp.Aid=row.Aid;
+      
+      this.temp.Id=row.Id;
+      // this.temp.EId='';
+      // this.temp.Id=0;
+      // this.temp.Userid=row.Userid;
+      // this.temp.Aid=row.Aid;
       this.temp.Name=this.wuliu;
       this.temp.ShipperCode='';
       this.temp.LogisticCode='';
@@ -284,17 +250,18 @@ export default {
       this.$refs["dataForm"].validate(valid => {
         if (valid) { 
           var param={
-              Id:this.temp.Id,
-              Aid:this.temp.Aid,
-              Userid:this.temp.Userid,
-              Name:this.temp.Name,
-              ShipperCode:this.temp.ShipperCode,
-              LogisticCode:this.temp.LogisticCode,
-              EId:this.temp.EId
+              id:this.temp.Id,
+              // Aid:this.temp.Aid,
+              // Userid:this.temp.Userid,
+              logisticsname:this.temp.Name,
+              // ShipperCode:this.temp.ShipperCode,
+              logisticscode:this.temp.LogisticCode,
+              // EId:this.temp.EId
           };    
+          console.log(param)
           var data = this.$qs.stringify(param);
           request({
-            url: "DrawCashInfo/SetLogistics",
+            url: "Prize/SetPrize",
             method: "post",
             data
           }).then(response => {
@@ -310,53 +277,6 @@ export default {
         }
       });
     },  
-    handleup(){
-      this.dialogwuliuVisible=true;
-      this.temp1.lid=this.Model[0].Id;
-      this.temp1.ids=[];
-      this.temp1.filepath='';
-      this.$nextTick(() => {
-        this.$refs["datawuliu"].clearValidate();
-      });
-    }, 
-    upLoad(param){
-         upfile(param.file,'Upload/UploadFile',(data => {
-             if(data.Status){
-                 this.temp1.filepath=data.Path;
-             }else{
-                 this.$message({
-                    message: data.Msg,
-                    type: "error"
-                });
-             };
-         }))
-    }, 
-    subwuliu(){
-      this.$refs["datawuliu"].validate(valid => {
-        if (valid) { 
-          var param={
-              filepath:this.temp1.filepath,
-              lid:this.temp1.lid,
-              ids:this.temp1.ids.join(',')
-          };  
-          var data = this.$qs.stringify(param);
-          request({
-            url: "DrawCashInfo/LogisticsBatch",
-            method: "post",
-            data
-          }).then(response => {
-            if (response.Status==1) {
-              this.getList();    
-              this.dialogwuliuVisible = false;
-              this.$message({
-                message: response.Msg,
-                type: "success"
-              });
-            }
-          });
-        }
-      });
-    }, 
   }
 };
 </script>

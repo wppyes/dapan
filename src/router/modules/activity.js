@@ -58,6 +58,20 @@ const activityRouter = {
         title: '奖品发放'
       }
     },
+    {
+      path: 'prizeset-yinhang',
+      component: () => import('@/view/activity/prizeset-yinhang'),
+      meta: {
+        title: '银行物流'
+      }
+    },
+    {
+      path: 'prizeset-huabing',
+      component: () => import('@/view/activity/prizeset-huabing'),
+      meta: {
+        title: '银行奖品发放'
+      }
+    },
   ]
 }
 export default activityRouter
