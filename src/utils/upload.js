@@ -3,8 +3,8 @@
 import { MessageBox } from 'element-ui'
 import router from '../router/index'
 // var baseurl='http://192.168.1.60/';
-//  var baseurl='http://192.168.1.145:3540/';
-var baseurl='/API/';
+ var baseurl='http://192.168.1.145:8023/';
+// var baseurl='/API/';
 function upfile(file,url,call){
     var FileController = baseurl+url;     // 接收上传文件的后台地址 
     // FormData 对象

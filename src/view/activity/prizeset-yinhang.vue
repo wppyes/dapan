@@ -8,7 +8,21 @@
         class="filter-item"
         clearable
       />  
-      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">搜索</el-button>     
+      <el-date-picker
+          v-model="value6"
+          type="daterange"
+          unlink-panels
+          range-separator="至"
+          class="filter-item"
+          value-format="yyyy-MM-dd"
+          clearable
+          start-placeholder="开始日期"
+          end-placeholder="结束日期" />
+      </el-date-picker>
+      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">搜索</el-button>   
+      <el-button class="filter-item" type="primary" icon="el-icon-download" @click="handleDownload">下载</el-button>   
+      <el-button class="filter-item" type="primary" icon="el-icon-edit" @click="handleup">批量设置物流</el-button>   
+      <span>格式：（id,物流名称，物流单号）</span>
     </div>
     <el-table v-loading="listLoading" :data="list" border fit highlight-current-row>
       <el-table-column label="活动名称" align="center" prop="Prize"></el-table-column>
@@ -34,16 +48,16 @@
           </el-tag>
         </template>
       </el-table-column> -->
-      <!-- <el-table-column label="操作" align="center">
+      <el-table-column label="操作" align="center">
         <template slot-scope="scope">
           <el-button size="mini" type="success" @click="handlefafang(scope.row,'发放',true)">
             发放
           </el-button>
-          <el-button size="mini" type="success" @click="handleditor(scope.row,'修改',false)">
+          <!-- <el-button size="mini" type="success" @click="handleditor(scope.row,'修改',false)">
             <i class="el-icon-edit"></i> 修改
-          </el-button>
+          </el-button> -->
         </template>
-      </el-table-column> -->
+      </el-table-column>
     </el-table>          
     <pagination
       small
@@ -86,11 +100,41 @@
         <el-button @click="dialogdetailVisible = false">关闭</el-button>
       </div>
     </el-dialog>
+    <el-dialog title="批量设置物流" :visible.sync="dialogwuliuVisible" :close-on-click-modal="false" width="650px">
+      <el-form
+        ref="datawuliu"
+        :rules="ruleswuliu"
+        :model="temp1"
+        label-position="left"
+        label-width="100px"
+        style="width: 350px; margin-left:50px;"
+      >        
+        <el-form-item label="文件上传" prop="filepath">          
+          <el-upload
+              class="upload-demo"
+              drag
+              ref="upload"
+              accept=".xls,.xlsx"
+              action=""
+              :http-request="upLoad"
+              >
+              <i class="el-icon-upload"></i>
+              <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+              <div class="el-upload__tip" slot="tip">只能上传xls文件</div>
+          </el-upload>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogwuliuVisible = false">取消</el-button>
+        <el-button type="primary" @click="subwuliu">确定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 <script>
 import request from "@/utils/request";
 import Pagination from "@/components/Pagination";
+import upfile from '@/utils/upload';
 export default {
   name: "prizeset",
   components: { Pagination },
@@ -105,6 +149,8 @@ export default {
       iscreate:true,//是否是增加
       Model:[],//物流列表
       wuliu:'',
+      value6:'',
+      downloadLoading:false,
       temp:{
         Id:0,
         Userid:'',
@@ -122,11 +168,12 @@ export default {
         page: 1,
         sum: 15
       },
+      time1:'',
+      time2:'',
       temp1:{
-        ids:[],
-        lid:0,
         filepath:''
       },
+      dialogwuliuVisible:false,
       rules:{  
         Name: [
           { required: true, message: "请选择物流！", trigger: "blur" }
@@ -154,6 +201,15 @@ export default {
           }
         }
       }
+    },
+    value6(val, oldval) {
+      if(val){
+        this.time1 = val[0];
+        this.time2 = val[1];
+      }else{
+        this.time1='';
+        this.time2='';
+      }
     }
   },
   created() {
@@ -179,6 +235,13 @@ export default {
         }
       });
     },
+    handleup(){
+      this.dialogwuliuVisible=true;
+      this.temp1.filepath='';
+      this.$nextTick(() => {
+        this.$refs["datawuliu"].clearValidate();
+      });
+    }, 
     getmodel(){
       request({
         url: "Express/ExpressDDL",
@@ -220,6 +283,42 @@ export default {
         this.$refs["dataForm"].clearValidate();
       });
     },   
+    upLoad(param){
+         upfile(param.file,'Upload/UploadFile',(data => {
+             if(data.Status){
+                 this.temp1.filepath=data.Path;
+             }else{
+                 this.$message({
+                    message: data.Msg,
+                    type: "error"
+                });
+             };
+         }))
+    }, 
+    subwuliu(){
+      this.$refs["datawuliu"].validate(valid => {
+        if (valid) { 
+          var param={
+              filepath:this.temp1.filepath,
+          };  
+          var data = this.$qs.stringify(param);
+          request({
+            url: "Prize/YHPrizeBatch",
+            method: "post",
+            data
+          }).then(response => {
+            if (response.Status==1) {
+              this.getList();    
+              this.dialogwuliuVisible = false;
+              this.$message({
+                message: response.Msg,
+                type: "success"
+              });
+            }
+          });
+        }
+      });
+    }, 
     handleditor(row, title, creat) {
       this.temp.Id=row.LId;
       this.temp.Userid=row.Userid;
@@ -245,6 +344,54 @@ export default {
       this.dialogdetailVisible=true;
       this.remark=JSON.parse(row.Remark).Traces;
       console.log(this.remark)
+    },
+    handleDownload(){
+      if (this.time2=='') {
+        this.$message({
+          message: "请选择时间！！",
+          type: "danger"
+        });
+        return;
+      }
+      this.downloadLoading = true;
+      this.$confirm("确定要导出物流信息吗？", '提示', {
+          dangerouslyUseHTMLString: true,
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+        }).then(() => {
+          request({
+            url: "Prize/Excel",
+            method: "get",
+            params: {time1:this.time1,time2:this.time2}
+          }).then(response => {
+              if(response.Status==1){
+                this.exportex(response,'物流信息')
+                this.downloadLoading = false
+              }          
+          });          
+        }).catch(() => {   
+          this.downloadLoading = false      
+        });
+    },
+    exportex(response,title){
+      import('@/vendor/Export2Excel').then(excel => {
+          const tHeader = response.TableTitle;
+          const filterVal = response.TableField;
+          const data = this.formatJson(filterVal, response.List)
+          if(response.List){
+            excel.export_json_to_excel({
+              header: tHeader,
+              data,
+              filename:  title
+            });
+          }
+        
+      }); 
+    },
+    formatJson(filterVal, jsonData) {
+      return jsonData.map(v => filterVal.map(j => {
+          return v[j]
+      }))
     },
     createData(){
       this.$refs["dataForm"].validate(valid => {
