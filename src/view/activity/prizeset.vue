@@ -83,21 +83,21 @@
         <el-button @click="dialogdetailVisible = false">关闭</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="批量设置物流" :visible.sync="dialogwuliuVisible" :close-on-click-modal="false" width="650px">
+    <el-dialog title="批量设置物流" :visible.sync="dialogwuliuVisible" :close-on-click-modal="false" top="60px" width="650px">
       <el-form
         ref="datawuliu"
         :rules="ruleswuliu"
         :model="temp1"
         label-position="left"
         label-width="100px"
-        style="width: 350px; margin-left:50px;"
+        style="width: 550px; margin-left:50px;"
       >        
          <el-form-item label="物流" prop="lid">
           <el-select v-model="temp1.lid" placeholder="请选择物流">
             <el-option v-for="item in Model" :label="item.Name" :key="item.Id" :value="item.Id"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="活动选择" prop="ids">
+        <el-form-item label="活动选择" prop="ids" class="heightset">
           <el-checkbox-group v-model="temp1.ids">
             <el-checkbox v-for="item in parizeselect" :label="item.Id" :key="item.Id" name="type">{{item.Title}}</el-checkbox>
           </el-checkbox-group>
@@ -363,4 +363,5 @@ export default {
 <style lang="scss" rel="stylesheet/scss">
 .prizeset .wuliuinfo li{list-style: none; line-height:22px; margin-bottom: 10px; display: flex;}
 .prizeset .wuliuinfo span{color: #999; margin-right: 10px; width: 145px;}
+.prizeset .heightset{max-height: 270px; overflow-y: auto;}
 </style>

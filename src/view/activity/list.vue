@@ -275,12 +275,11 @@ export default {
     quan(row){
       this.temp.aid=row.Id;
       this.temp.filename='';      
-      if(row.IsCode){
-        this.temp.type=0;
-      }   
-      if(row.IsKalman){
+      if(row.PType==2){
         this.temp.type=1;
-      }      
+      }else{
+        this.temp.type=0;
+      }
       request({
         url: "DrawActivity/GetCod",
         method: "get",

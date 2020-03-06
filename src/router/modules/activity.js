@@ -66,6 +66,13 @@ const activityRouter = {
       }
     },
     {
+      path: 'chaxu-yinhang',
+      component: () => import('@/view/activity/chaxu-yinhang'),
+      meta: {
+        title: '银行物流(查询)'
+      }
+    },
+    {
       path: 'prizeset-huabing',
       component: () => import('@/view/activity/prizeset-huabing'),
       meta: {
